@@ -35,7 +35,6 @@ employees = [
     (3, 'Кириллов', 'Валентин', 'Владиславович',),
     (4, 'Игнатьев', 'Игорь', 'Дмитриевич',),
 ]
-
 emails = [
     (1, 1, 'sshershukohershuko@mail.ru',),
     (2, 1, '-v@mail.ru',),
@@ -44,7 +43,6 @@ emails = [
     (5, 3, 'kirillov@mail.ru',),
     (6, 3, 'kirillov@mail.ru',),
 ]
-
 salary = [
     (1, '2019-12-01', 'salary', 50000),
     (1, '2020-01-01', 'salary', 50000),
@@ -145,6 +143,4 @@ salary = [
     (4, '2020-12-01', 'bonus', 7000),
     (4, '2021-01-01', 'bonus', 7000),
 ]
-
-
 task_solution(employees, emails, salary)

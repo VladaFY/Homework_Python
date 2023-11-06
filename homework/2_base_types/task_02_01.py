@@ -18,5 +18,4 @@ def task_solution(first, second):
 
 first = '1/2'
 second = '2/3'
-
 print(task_solution(first, second))
