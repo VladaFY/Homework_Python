@@ -2,6 +2,7 @@ import random
 
 
 class Matrix:
+    
     def __init__(self, rows, cols=None):
         """
         Инициализация объекта Matrix.
@@ -12,18 +13,29 @@ class Matrix:
             self.rows = rows  # Устанавливаем количество строк
             self.cols = cols  # Устанавливаем количество столбцов
             # Создаем матрицу с случайными числами от 1 до 10
-            self.matrix = [
-                [random.randint(1, 10) for _ in range(cols)] for _ in range(rows)]
+            self.matrix = [[random.randint(1, 10) for _ in range(cols)] for _ in range(rows)]
         else:  # Если rows - это список списков
             self.matrix = rows  # Устанавливаем матрицу
             self.rows = len(rows)  # Устанавливаем количество строк
             self.cols = len(rows[0])  # Устанавливаем количество столбцов
 
     def __str__(self):
-        matrix_str = '\n'.join(
-            ['\t'.join([str(cell) for cell in row]) for row in self.matrix])
+        matrix_str = '\n'.join(['\t'.join([str(cell) for cell in row]) for row in self.matrix])
         return matrix_str
-
+    
+    # Декоратор реализует проверку размерности матриц для операций сложения и умножения.
+    # Если размерности не совпадают, то вызывается исключение
+    def valid_matrix(func):
+        def wrapper(self, other):
+            if not isinstance(other, Matrix):
+                raise TypeError("Правый операнд должен быть матрицей.")
+            if self.rows != other.rows or self.cols != other.cols:  # Если размерности матриц не совпадают
+                # Вызываем исключение
+                raise ValueError("Размерности матриц не совпадают.")
+            return func(self, other)
+        return wrapper
+    
+    @valid_matrix
     def __add__(self, other):
         """
         Сложение двух матриц.
@@ -31,12 +43,10 @@ class Matrix:
         :param other: Matrix
         :return: Matrix
         """
-        if self.rows != other.rows or self.cols != other.cols:  # Если размерности матриц не совпадают
-            # Вызываем исключение
-            raise ValueError("Размерности матриц не совпадают.")
         # Возвращаем новую матрицу, которая является результатом сложения двух матриц
         return Matrix([[self.matrix[i][j] + other.matrix[i][j] for j in range(self.cols)] for i in range(self.rows)])
 
+    @valid_matrix
     def __sub__(self, other):
         """
         Вычитание двух матриц.
@@ -44,9 +54,6 @@ class Matrix:
         :param other: Matrix
         :return: Matrix
         """
-        if self.rows != other.rows or self.cols != other.cols:  # Если размерности матриц не совпадают
-            # Вызываем исключение
-            raise ValueError("Размерности матриц не совпадают.")
         # Возвращаем новую матрицу, которая является результатом вычитания двух матриц
         return Matrix([[self.matrix[i][j] - other.matrix[i][j] for j in range(self.cols)] for i in range(self.rows)])
 
