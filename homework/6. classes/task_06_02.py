@@ -1,116 +1,150 @@
-from abc import ABC
+from abc import ABC, abstractmethod
+
+# courses = {"$": 1.2, "₽": 60, "€": 1}
+courses = {"$": 0, "₽": 0, "€": 0}
 
 
-class CourseDescriptor:
+class Curces_descriptor():
     """
-    CourseDescriptor - это класс дескриптора. Дескрипторы позволяют определять поведение атрибутов класса.
-    В данном случае, CourseDescriptor контролирует доступ к атрибуту _courses.
+    Curces_descriptor - это класс дескриптора. Дескрипторы позволяют определять поведение атрибутов класса.
+    В данном случае, Curces_descriptor контролирует доступ к атрибуту _courses.
 
     :param None: Параметры для инициализации не требуются.
     :type None: None
     """
+
+    def __set_name__(self, owner, name):
+        """
+        Магический метод. Вызывается при создании объекта класса Curces_descriptor. 
+        Превращает переменную в приватную.
+
+        :param owner: ссылка на класс Currency
+        :type owner: Currency
+
+        :param name: имя задаваемое атрибуту
+        :type name: str
+
+        :return: None
+        """
+        self.name = '_' + name
 
     def __get__(self, instance, owner):
         """
         Метод __get__ вызывается при доступе к атрибуту. В данном случае, он возвращает значение _courses.
 
         :param instance: Экземпляр, через который был получен доступ к атрибуту.
-        :type instance: Currency
+        Может быть равно None, если вызов геттера через объект класса, а не экземпляр класса
+        :type instance: дочерние классы от Currency
         :param owner: Класс-владелец.
         :type owner: type
         :return: _courses класса-владельца.
         :rtype: dict
         """
-        return owner._courses
+        # print('Геттер')
+
+
+        if instance:
+            return instance.__dict__[self.name]
+        return courses
 
     def __set__(self, instance, value):
         """
-        Метод __set__ вызывается при изменении атрибута. В данном случае, он проверяет тип нового значения.
-        Если значение является словарем, оно присваивается _courses.
-        Если значение является числом, все курсы в _courses обновляются этим числом.
-        Если значение не является ни словарем, ни числом, вызывается исключение TypeError.
+        Вызывается при инициализации дочерних классов Currency
 
-        :param instance: Экземпляр, через который был получен доступ к атрибуту.
-        :type instance: Currency
-        :param value: Новое значение для атрибута.
-        :type value: Union[dict, int, float]
-        :raises TypeError: Если значение не является словарем или числом.
+        :param self: ссылается на объект класса Course
+        :type self: Course
+
+        :param instance: ссылается на объект класса Currency или его подкласс
+        :type instance: Currency или его подкласс
+
+        :param value: значение которое мы присваиваем
+        :type value: str
+
+        :return: None
         """
-        if isinstance(value, dict):
-            instance.__class__._courses = value
-        elif isinstance(value, (int, float)):
-            for key in instance.__class__._courses:
-                instance.__class__._courses[key] = value
-        else:
-            raise TypeError("courses must be a dictionary or a number")
+        # print('Сеттер')
+        
+        # Условие, которое определяет, в первый ли раз создается экземпляр класса. 
+        # Значение вида "1.2$$" - попадает только из инита. Если при этом значение в словаре равно нулю,
+        # значит ранее курс не устанавливался и не менялся, значит можно установить значение по умолчанию.
+        # При создании последующих экземпляров класса - обновлять не нужно, т.к. это перезатрет значение курса, выставленное в ручну.
+        if value[-2] == value[-1] and courses[value[-1]] == 0:
+            courses[value[-1]] = float(value[:-2])
+        elif value[-2] != value[-1]:
+            courses[value[-1]] = float(value[:-1])
+
+        instance.__dict__[self.name] = courses
 
 
 class Currency(ABC):
     """
-    Currency - это абстрактный базовый класс (ABC) для валют.
-    Определяет общие атрибуты и методы, которые должны быть в каждом классе валюты.
+    Абстрактный класс для определния интерфейса
 
-    :param None: Параметры для инициализации не требуются.
-    :type None: None
     """
-    # _courses - это приватный атрибут класса, который хранит курсы валют.
-    # Значениями являются курсы валют, а ключами - символы валют.
-    _courses = {"$": 1.2, "₽": 60, "€": 1}
+    course = Curces_descriptor()
 
-    # courses - это дескриптор, который контролирует доступ к _courses.
-    # При обращении к courses вызывается метод __get__ дескриптора, который возвращает значение _courses.
-    # При установке значения courses вызывается метод __set__ дескриптора, который обновляет _courses.
-    courses = CourseDescriptor()
 
-    # Конструктор класса принимает один аргумент - количество валюты.
+    @classmethod
+    def classmethod(cls):
+        """
+        Метод-пустышка для демонстрации classmethod
+        """
+        print(cls.course)
+        print('Class method called')
+
+    @abstractmethod
+    def currency(self):
+        """
+        Оболочка метода, который должен быть реализован в каждом подклассе.
+        """
+        pass
+
     def __init__(self, amount):
         self.amount = amount
 
+    @staticmethod
+    def check_value(value):
+        """
+        Проверяем, что передаваемый параметр является одним из подклассов
+        """
+        if not isinstance(value, (Euro, Dollar, Ruble)):
+            return False
+        return True
+
     def __str__(self):
-        """
-        __str__ - это специальный метод, который возвращает строковое представление объекта.
-        В данном случае, он возвращает количество валюты и символ валюты.
+        # при попытке получить self.course срабатывает геттер из дескриптора
+        return f"{self.amount}{self.__class__.sign}"
 
-        :return: Строковое представление объекта в формате "количество символ".
-        :rtype: str
+    def to(self, target_currency):
         """
-        return f"{self.amount} {self.symbol}"
+        Конвертировать в другую валюту
+        
+        :param name: ссылается на объект одного из классов валют
+        
+        :return: класс валюты в которую конвертируем
+        """
 
-    def to(self, other_currency):
-        """
-        to - это метод, который конвертирует данную валюту в другую валюту.
-        Он принимает класс валюты в качестве аргумента и возвращает новый экземпляр этого класса.
-        Конвертация производится на основе курсов валют, хранящихся в _courses.
-
-        :param other_currency: Класс валюты, в которую нужно конвертировать.
-        :type other_currency: type
-        :return: Новый экземпляр класса other_currency.
-        :rtype: other_currency
-        """
-        ratio = self.courses[other_currency.symbol] / self.courses[self.symbol]
-        return other_currency(self.amount * ratio)
+        # нужно создать экземпляр класса, что бы в словаре courses установился курс по умолчанию для валюты.
+        tg = target_currency(0)
+        return target_currency((self.amount / self.course[self.__class__.sign]) * self.course[tg.sign])
 
     def __gt__(self, other):
         """
-        __gt__ - это специальный метод, который определяет поведение оператора >.
-        В данном случае, он сравнивает количество валюты данного объекта с количеством валюты другого объекта.
-
-        :param other: Объект, с которым сравнивается данный объект.
-        :type other: Currency
-        :return: True, если количество валюты данного объекта больше, иначе False.
-        :rtype: bool
+        Проверка на >
+        
+        :param other: ссылается на объект класса валюты
+        
+        :return: bool
         """
-        return self.amount > other.amount
+        return self.amount > other.to(self.__class__).amount
 
     def __add__(self, other):
         """
-        __add__ - это специальный метод, который определяет поведение оператора +.
-        В данном случае, он конвертирует другую валюту в данную валюту и складывает их количество.
-
-        :param other: Объект, который нужно добавить к данному объекту.
-        :type other: Currency
-        :return: Новый экземпляр класса с суммой количества валют.
-        :rtype: type(self)
+        Проверка на >=
+        
+        :param other: ссылается на объект класса валюты
+        
+        :return: bool
         """
         if isinstance(other, Currency):
             other = other.to(type(self))
@@ -118,126 +152,137 @@ class Currency(ABC):
 
     def __sub__(self, other):
         """
-        Вычитание валют.
-        Args:
-            other (Currency): Другая валюта.
+        Вычитание двух объектов
 
-        Returns:
-            Currency: Результат вычитания валют.
+        :param other: ссылается на объект класса валюты
+
+        :return: класс валюты
         """
-        return type(self)(self.amount - other.to(type(self)).amount)
-
-    def __mul__(self, number):
-        """
-        Умножение валюты на число.
-
-        Args:
-            number (float): Число для умножения.
-
-        Returns:
-            Currency: Результат умножения валюты на число.
-        """
-        return type(self)(self.amount * number)
-
-    def __truediv__(self, number):
-        """
-        Деление валюты на число.
-
-        Args:
-            number (int): Число для деления.
-
-        Returns:
-            Currency: Результат деления валюты на число.
-        """
-        return type(self)(self.amount / number)
-
-    def __eq__(self, other):
-        """
-        Сравнение валют по сумме.
-
-        Args:
-            other (Currency): Другая валюта.
-
-        Returns:
-            bool: True, если суммы равны, иначе False.
-        """
-        return self.amount == other.to(type(self)).amount
-
-    def __lt__(self, other):
-        """
-        Сравнение валют: меньше чем.
-
-        Args:
-            other (Currency): Другая валюта.
-
-        Returns:
-            bool: True, если данная валюта меньше другой, иначе False.
-        """
-        return self.amount < other.to(type(self)).amount
-
-    def __gt__(self, other):
-        """
-        Сравнение валют: больше чем.
-
-        Args:
-            other (Currency): Другая валюта.
-
-        Returns:
-            bool: True, если данная валюта больше другой по сумме, иначе False.
-        """
-        return self.amount > other.to(type(self)).amount
-
-    def __le__(self, other):
-        """
-        Сравнение валют: меньше или равно.
-
-        Args:
-            other (Currency): Другая валюта.
-
-        Returns:
-            bool: True, если данная валюта меньше или равна другой по сумме, иначе False.
-        """
-        return self.amount <= other.to(type(self)).amount
+        self.check_value(other)
+        return self.__class__(self.amount - other.to(self.__class__).amount)
 
     def __ge__(self, other):
         """
-        Сравнение валют: больше или равно.
+        Проверка на >=
 
-        Args:
-            other (Currency): Другая валюта.
+        :param other: ссылается на объект класса валюты
 
-        Returns:
-            bool: True, если данная валюта больше или равна другой по сумме, иначе False.
+        :return: bool
         """
-        return self.amount >= other.to(type(self)).amount
+        self.check_value(other)
+        return self.amount >= other.to(self.__class__).amount
+
+    def __truediv__(self, number):
+        """
+        Деление на число
+
+        :param other: ссылается на объект класса валюты
+
+        :return: float
+        """
+        return self.__class__(self.amount / number)
+
+    def __mul__(self, number):
+        """
+        Умножение на число
+
+        :param other: ссылается на объект класса валюты
+
+        :return: int
+        """
+        return self.__class__(self.amount * number)
 
 
 class Euro(Currency):
-    symbol = "€"
-    currency = "Euro"
+    sign = '€'
+
+    def __init__(self, amount):
+        super().__init__(amount)
+        self.course = '1€€'  # здесь вызовется дескриптор, т.к у него приоритет выше чем у свойств атрибутов, а не создастся обычный атрибут course
+        self.currency = 'Euro' # вызывается геттер от property. 
+
+    # реализация абстрактного метода
+    @property
+    def currency(self):
+        return self.__currency
+
+    @currency.setter
+    def currency(self, val):
+        if val in ['Евро', 'Euro']:
+            self.__currency = val
+        else:
+            print('Значение должно быть "Евро" или "Euro"')
+
 
 
 class Dollar(Currency):
-    symbol = "$"
+    sign = '$'
+
+    def __init__(self, amount):
+        super().__init__(amount)
+        self.course = '1.2$$'
+        self.currency = 'Dollar'
+
+    @property
+    def currency(self):
+        return self.__currency
+
+    @currency.setter
+    def currency(self, val):
+        if val in ['Доллар', 'Dollar']:
+            self.__currency = val
+        else:
+            print('Значение должно быть Доллар или Dollar')
 
 
 class Ruble(Currency):
-    symbol = "₽"
+    sign = '₽'
+
+    def __init__(self, amount):
+        super().__init__(amount)
+        self.course = '60₽₽'
+        self.currency = 'Ruble'
+
+    @property
+    def currency(self):
+        return self.__currency
+
+    @currency.setter
+    def currency(self, val):
+        if val in ['Рубль', 'Ruble']:
+            self.__currency = val
+        else:
+            print('Значение должно быть Рубль или Ruble')
 
 
 e = Euro(5)
+
 print(e)
 # 5 €
+r = Ruble(1)
 print(e.to(Dollar))
-# 6 $
+# #6 $
 print(sum([Euro(i).amount for i in range(5)]))
-# #10 €
+# #10
 print(e > Euro(6))
-# False
+# #False
 print(e + Dollar(10))
 # #13 €
 print(Dollar(10) + e)
 # 16 $
-print(Euro.courses[Dollar.symbol])
-Euro.courses[Dollar.symbol] = 2
-print(Euro.courses[Dollar.symbol])
+print(e.course)
+e.course = '2$'  # установили курс евро в два доллара
+print(e.to(Dollar))
+# #10 $
+# print(Euro.course)
+print(Euro.course[Dollar.sign])
+# #2
+print(Euro.course[Ruble.sign])
+# #60
+print(e.currency)
+# #'Euro'
+e.currency = 'Евро'
+print(e.currency)
+Currency.classmethod()
+
+e.currency  = 'тест'

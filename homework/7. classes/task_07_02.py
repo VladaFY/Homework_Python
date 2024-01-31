@@ -55,9 +55,9 @@ class Something:
         return self.x
 
 
-# s = Something(10)
-# print(s.attr)
-# # 100
-# s.attr = 3
-# print(s.attr)
-# 9
+s = Something(10)
+print(s.attr)
+# 100
+s.attr = 3
+print(s.attr)
+9
