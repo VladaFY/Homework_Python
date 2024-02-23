@@ -1,0 +1,12 @@
+error fileError occurred at 2024-02-17 17:19:12:
+Error type: <class 'ZeroDivisionError'>
+Error message: division by zero
+
+Error occurred at 2024-02-17 17:20:38:
+Error type: <class 'ZeroDivisionError'>
+Error message: division by zero
+
+Error occurred at 2024-02-17 17:21:41:
+Error type: <class 'TypeError'>
+Error message: 'int' object is not iterable
+
